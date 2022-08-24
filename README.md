@@ -28,6 +28,9 @@ This repository contains the music system used for Evelyn powered by erela.js.
 - Full YouTube, Spotify, Deezer, SoundCloud and Apple Music support
 - Dynamic queue system
 
+## Prerequisites
+Before implementing this system, you will need to install the following dependencies: `erela.js erela.js-deezer better-erela.js-spotify better-erela.js-apple genius-lyrics`.
+
 ## Credits
 The following repos have helped me a lot while developing this system.
 - [Alvaa](https://github.com/Allvaa/lavalink-musicbot) 
