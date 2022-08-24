@@ -29,7 +29,7 @@ This repository contains the music system used for Evelyn powered by erela.js.
 - Dynamic queue system
 
 ## Prerequisites
-Before implementing this system, you will need to install the following dependencies: `erela.js erela.js-deezer better-erela.js-spotify better-erela.js-apple genius-lyrics`.
+Before implementing this system, you will need to install the following dependencies: `erela.js erela.js-deezer better-erela.js-spotify better-erela.js-apple genius-lyrics pretty-ms@7.0.1 chalk@4.1.2`.
 
 ## Credits
 The following repos have helped me a lot while developing this system.
