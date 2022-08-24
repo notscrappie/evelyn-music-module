@@ -1,0 +1,25 @@
+{
+  "spotifyClientID": "your Spotify Client ID here",
+  "spotifySecret": "your Spotify Secret here",
+
+  "nodes": [
+    {
+      "id": "node name",
+      "host": "server IP here",
+      "port": 2000,
+      "password": "server password here",
+      "retryAmount": 15,
+      "retryDelay": 6000,
+      "secure": false
+    },
+    {
+      "id": "node name",
+      "host": "server IP here",
+      "port": 2000,
+      "password": "server password here",
+      "retryAmount": 15,
+      "retryDelay": 6000,
+      "secure": false
+    }
+  ]
+}
