@@ -19,10 +19,9 @@ module.exports = {
               .setTimestamp(),
           ],
         });
-      player.destroy();
+      return player.destroy();
     } else {
-      await player.setVoiceChannel(newChannel);
-      player.pause(true);
+      player.voiceChannel = newChannel;
       await wait(1000);
       player.pause(false);
     }
