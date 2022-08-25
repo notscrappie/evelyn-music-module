@@ -161,7 +161,12 @@ module.exports = {
           if (res.loadType === "PLAYLIST_LOADED") {
             player.queue.add(res.tracks);
 
-            if (!player.playing) player.play();
+            if (
+              !player.playing &&
+              !player.paused &&
+              player.queue.totalSize === res.tracks.length
+            )
+              player.play();
 
             const playlistEmbed = new EmbedBuilder()
               .setDescription(
@@ -298,14 +303,6 @@ module.exports = {
             .setDescription(`🔹 | Skipped.`)
             .setTimestamp();
 
-          const npEmbed = new EmbedBuilder()
-            .setColor("Grey")
-            .setTitle("Now Playing")
-            .setDescription(
-              `**[${track.title}](${track.uri})** [${player.queue.current.requester}]`
-            )
-            .setTimestamp();
-
           const pauseEmbed = new EmbedBuilder()
             .setColor("Grey")
             .setDescription("🔹 | Paused.");
@@ -340,6 +337,14 @@ module.exports = {
                   embeds: [notPlaying],
                   ephemeral: true,
                 });
+
+              const npEmbed = new EmbedBuilder()
+                .setColor("Grey")
+                .setTitle("Now Playing")
+                .setDescription(
+                  `**[${track.title}](${track.uri})** [${player.queue.current.requester}]`
+                )
+                .setTimestamp();
 
               return interaction.reply({ embeds: [npEmbed] });
             }
