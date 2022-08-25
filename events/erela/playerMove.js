@@ -13,7 +13,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor("Blurple")
               .setDescription(
-                "🔹 | I have been kicked from the channel, could've at least said bye. :c"
+                "🔹 | I have been kicked from the channel, you could've at least said bye. :c"
               )
               .setFooter({ text: "Bots have feelings too, you know?" })
               .setTimestamp(),
