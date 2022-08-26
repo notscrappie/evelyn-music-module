@@ -38,4 +38,4 @@ The following repos have helped me a lot while developing this system.
 - [Adivise](https://github.com/Adivise/NanoSpacePlus)
 - [OrangeFerdi](https://github.com/orangeferdi/embed-pages)
 
-If you decide to use this source code, we kindly ask you to give credit to us and to the people/repos that helped me bring this project to life.
+If you decide to use this source code, I kindly ask you to star this repository and give credit to me & to the people/repos that helped me bring this project to life.
