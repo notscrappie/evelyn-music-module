@@ -14,6 +14,9 @@ const client = new Client({
 
 client.config = require("./config.json");
 
+const { loadErela } = require("./handlers/erela.js");
+const { loadButtons } = require("./handlers/buttons.js");
+
 client.manager = new Manager({
   nodes: client.config.nodes,
   plugins: [
@@ -31,3 +34,8 @@ client.manager = new Manager({
 });
 
 module.exports = client;
+
+client.login(client.config.token).then(() => {
+  loadErela(client);
+  loadButtons(client);
+});
