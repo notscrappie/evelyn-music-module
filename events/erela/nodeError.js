@@ -1,4 +1,4 @@
-const { magenta, white } = require("chalk");
+const { magenta, white, red } = require("chalk");
 
 module.exports = {
   name: "nodeError",
