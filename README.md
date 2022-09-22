@@ -21,7 +21,7 @@
 
 ## About
 
-This repository contains the music system used for Evelyn powered by erela.js.
+This repository contains the music system used for [Evelyn](https://github.com/notscrappie/Evelyn) powered by erela.js.
 
 ## Features
 
