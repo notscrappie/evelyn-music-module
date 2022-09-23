@@ -13,6 +13,7 @@ const client = new Client({
 });
 
 client.config = require("./config.json");
+client.buttons = new Collection();
 
 const { loadErela } = require("./handlers/erela.js");
 const { loadButtons } = require("./handlers/buttons.js");
