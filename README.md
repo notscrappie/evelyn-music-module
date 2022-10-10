@@ -4,7 +4,7 @@
   ></a>
   
 </div>
-  <h1 align=center>Evelyn's Music Module</h1>
+  <h1 align=center>Evelyn's Music Module [LEGACY] </h1>
 
   <div align=center>
       <img src="https://forthebadge.com/images/badges/you-didnt-ask-for-this.svg">
@@ -21,7 +21,7 @@
 
 ## About
 
-This repository contains the music system used for Evelyn powered by erela.js.
+This repository contains the old music system used for Evelyn powered by erela.js. As erela.js has been officially discontinued, Evelyn has moved onto using Kazagumo/Shoukaku for her music system. Since then, this system has entered legacy mode and will no longer receive updates or any sort of support from me.
 
 ## Features
 
