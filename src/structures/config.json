@@ -4,21 +4,15 @@
 
   "nodes": [
     {
-      "id": "node name",
-      "host": "server IP here",
-      "port": 2000,
-      "password": "server password here",
-      "retryAmount": 15,
-      "retryDelay": 6000,
+      "name": "node name",
+      "url": "server IP here:port here",
+      "auth": "server password here",
       "secure": false
     },
     {
-      "id": "node name",
-      "host": "server IP here",
-      "port": 2000,
-      "password": "server password here",
-      "retryAmount": 15,
-      "retryDelay": 6000,
+      "name": "node name",
+      "url": "server IP here:port here",
+      "auth": "server password here",
       "secure": false
     }
   ]

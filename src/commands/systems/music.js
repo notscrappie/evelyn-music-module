@@ -120,12 +120,11 @@ module.exports = {
         embeds: [alreadyPlaying],
       });
 
-    const player = client.manager.create({
-      guild: interaction.guild.id,
-      voiceChannel: member.voice.channel.id,
-      textChannel: interaction.channelId,
-      selfDeafen: true,
-      volume: 100,
+    const player = await client.kazagumo.createPlayer({
+      guildId: interaction.guild.id,
+      voiceId: member.voice.channel.id,
+      textId: interaction.channelId,
+      deaf: true,
     });
 
     let res;
@@ -166,28 +165,18 @@ module.exports = {
       switch (options.getSubcommand()) {
         case "play": {
           query = options.getString("query");
-          res = await player.search(query, interaction.user);
+          res = await player.search(query, { requester: interaction.user });
 
-          if (player.state !== "CONNECTED") player.connect();
-
-          if (res.loadType === "LOAD_FAILED") {
-            if (!player.queue.current) player.destroy();
-
-            return interaction.editReply({
-              embeds: [errorOccured],
-            });
+          if (!res.tracks.length) {
+            if (player) player.destroy();
+            return interaction.editReply({ embeds: [noQueryFound] });
           }
 
-          if (res.loadType === "NO_MATCHES") {
-            if (!player.queue.current) player.destroy();
-
-            return interaction.editReply({
-              embeds: [noQueryFound],
-            });
-          }
-
-          if (res.loadType === "PLAYLIST_LOADED") {
-            player.queue.add(res.tracks);
+          if (res.type === "PLAYLIST") {
+            const tracks = res.tracks;
+            for (let track of tracks) {
+              player.queue.add(track);
+            }
 
             if (
               !player.playing &&
@@ -202,7 +191,7 @@ module.exports = {
                 name: "Playlist added to the queue",
                 iconURL: member.user.avatarURL({ dynamic: true }),
               })
-              .setDescription(`**[${res.playlist.name}](${query})**`)
+              .setDescription(`**[${res.playlistName}](${query})**`)
               .addFields(
                 {
                   name: "Added",
@@ -220,11 +209,9 @@ module.exports = {
             return interaction.editReply({ embeds: [playlistEmbed] });
           }
 
-          if (
-            res.loadType === "TRACK_LOADED" ||
-            res.loadType === "SEARCH_RESULT"
-          ) {
+          if (res.type === "TRACK" || res.type === "SEARCH") {
             player.queue.add(res.tracks[0]);
+
             if (!player.playing && !player.paused && !player.queue.size)
               player.play();
 
@@ -280,18 +267,14 @@ module.exports = {
           const repeatQueue = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-              `🔹 | Repeat mode is now ${
-                player.queueRepeat ? "off" : "on"
-              }. (Queue)`
+              `🔹 | Repeat mode is now ${player.loop ? "off" : "on"}. (Queue)`
             )
             .setTimestamp();
 
           const repeatSong = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-              `🔹 | Repeat mode is now ${
-                player.trackRepeat ? "off" : "on"
-              }. (Song)`
+              `🔹 | Repeat mode is now ${player.loop ? "off" : "on"}. (Song)`
             )
             .setTimestamp();
 
@@ -310,14 +293,14 @@ module.exports = {
                 });
 
               if (!player.queueRepeat) {
-                player.setQueueRepeat(true);
+                await player.setLoop("queue");
                 return interaction.editReply({
                   embeds: [repeatQueue],
                 });
               }
 
               if (player.queueRepeat) {
-                player.setQueueRepeat(false);
+                await player.setLoop("off");
                 return interaction.editReply({
                   embeds: [repeatQueue],
                 });
@@ -330,14 +313,14 @@ module.exports = {
                 });
 
               if (!player.trackRepeat) {
-                player.setTrackRepeat(true);
+                await player.setLoop("track");
                 return interaction.editReply({
                   embeds: [repeatSong],
                 });
               }
 
               if (player.trackRepeat) {
-                player.setTrackRepeat(false);
+                await player.setLoop("off");
                 return interaction.editReply({
                   embeds: [repeatSong],
                 });
@@ -400,7 +383,7 @@ module.exports = {
                   ephemeral: true,
                 });
 
-              await player.stop();
+              player.skip();
 
               return interaction.editReply({ embeds: [skipEmbed] });
             }
@@ -418,13 +401,11 @@ module.exports = {
                   iconURL: member.user.avatarURL({ dynamic: true }),
                 })
                 .setDescription(
-                  `[${track.title}](${track.uri}) [${
-                    player.queue.current.requester
-                  }]
+                  `[${track.title}](${track.uri}) [${track.requester}]
                   
-                  \`${pms(player.position)}\` ${progressbar(player)} \`${pms(
-                    player.queue.current.duration
-                  )}\`
+                  \`${pms(player.shoukaku.position)}\` ${progressbar(
+                    player
+                  )} \`${pms(track.length)}\`
                 `
                 )
                 .setTimestamp();
@@ -437,12 +418,12 @@ module.exports = {
                   ephemeral: true,
                 });
 
-              await player.pause(true);
+              player.pause(true);
 
               return interaction.editReply({ embeds: [pauseEmbed] });
             }
             case "resume": {
-              await player.pause(false);
+              player.pause(false);
 
               return interaction.editReply({ embeds: [resumeEmbed] });
             }
@@ -501,7 +482,7 @@ module.exports = {
                   ephemeral: true,
                 });
 
-              await player.queue.shuffle();
+              player.queue.shuffle();
 
               return interaction.editReply({ embeds: [shuffleEmbed] });
             }
@@ -552,7 +533,7 @@ module.exports = {
                   embeds.push(queueEmbed);
                 }
               }
-              await embedPages(client, interaction, embeds);
+              return await embedPages(client, interaction, embeds);
             }
             case "queueclear": {
               if (!player.playing)

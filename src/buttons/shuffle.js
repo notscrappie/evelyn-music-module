@@ -42,7 +42,7 @@ module.exports = {
       })
       .setTimestamp();
 
-    await player.queue.shuffle();
+    player.queue.shuffle();
 
     return interaction.reply({ embeds: [shuffleEmbed] });
   },

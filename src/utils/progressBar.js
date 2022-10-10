@@ -1,15 +1,15 @@
 module.exports = {
   progressbar: function (player) {
-    let size = 25;
+    let size = 15;
     let line = "▬";
     let slider = "🔘";
 
     if (!player.queue.current) return `${slider}${line.repeat(size - 1)}]`;
     let current =
-      player.queue.current.duration !== 0
-        ? player.position
-        : player.queue.current.duration;
-    let total = player.queue.current.duration;
+      player.queue.current.length !== 0
+        ? player.queue.current.position
+        : player.queue.current.length;
+    let total = player.queue.current.length;
     let bar =
       current > total
         ? [line.repeat((size / 2) * 2), (current / total) * 100]

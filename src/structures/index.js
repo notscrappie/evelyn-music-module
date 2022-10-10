@@ -1,8 +1,7 @@
 const { Client, GatewayIntentBits, Partials } = require("discord.js");
-const Deezer = require("erela.js-deezer");
-const Apple = require("better-erela.js-apple").default;
-const Spotify = require("better-erela.js-spotify").default;
-const { Manager } = require("erela.js");
+const { Connectors } = require("shoukaku");
+const { Kazagumo } = require("kazagumo");
+const Spotify = require("kazagumo-spotify");
 
 const { GuildVoiceStates } = GatewayIntentBits;
 const { User, Message, Channel, GuildMember, ThreadMember } = Partials;
@@ -15,28 +14,39 @@ const client = new Client({
 client.config = require("./config.json");
 client.buttons = new Collection();
 
-const { loadErela } = require("./handlers/erela.js");
+const { loadShoukakuNodes } = require("./handlers/shoukakuNodes.js");
+const { loadShoukakuPlayer } = require("./handlers/shoukakuPlayer.js");
 const { loadButtons } = require("./handlers/buttons.js");
 
-client.manager = new Manager({
-  nodes: client.config.nodes,
-  plugins: [
-    new Spotify({
-      clientID: client.config.spotifyClientID,
-      clientSecret: client.config.spotifySecret,
-    }),
-    new Apple(),
-    new Deezer(),
-  ],
-  send: (id, payload) => {
-    let guild = client.guilds.cache.get(id);
-    if (guild) guild.shard.send(payload);
+const kazagumoClient = new Kazagumo(
+  {
+    plugins: [
+      new Spotify({
+        clientId: client.config.spotifyClientID,
+        clientSecret: client.config.spotifySecret,
+      }),
+    ],
+    defaultSearchEngine: "youtube",
+    send: (id, payload) => {
+      let guild = client.guilds.cache.get(id);
+      if (guild) guild.shard.send(payload);
+    },
   },
-});
+  new Connectors.DiscordJS(client),
+  client.config.nodes,
+  {
+    moveOnDisconnect: false,
+    resume: true,
+    reconnectTries: 5,
+    restTimeout: 10000,
+  }
+);
 
+client.manager = kazagumoClient;
 module.exports = client;
 
-client.login(client.config.token).then(() => {
-  loadErela(client);
-  loadButtons(client);
-});
+loadButtons(client);
+loadShoukakuNodes(client);
+loadShoukakuPlayer(client);
+
+client.login(client.config.token);
