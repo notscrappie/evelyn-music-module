@@ -83,21 +83,6 @@ module.exports = {
               { name: "🔹 | Now Playing", value: "nowplaying" }
             )
         )
-    )
-    .addSubcommand((options) =>
-      options
-        .setName("playlist")
-        .setDescription("Repeat the current song or queue.")
-        .addStringOption((option) =>
-          option
-            .setName("type")
-            .setDescription("Select the loop type.")
-            .setRequired(true)
-            .addChoices(
-              { name: "🔹 | Queue", value: "queue" },
-              { name: "🔹 | Song", value: "song" }
-            )
-        )
     ),
   /**
    * @param {ChatInputCommandInteraction} interaction
@@ -105,6 +90,7 @@ module.exports = {
    */
   async execute(interaction, client) {
     const { options, member, guild } = interaction;
+    const embed = new EmbedBuilder();
     const VC = member.voice.channel;
 
     await interaction.deferReply();
@@ -112,7 +98,7 @@ module.exports = {
     if (!VC)
       return interaction.editReply({
         embeds: [
-          new EmbedBuilder()
+          embed
             .setColor("Blurple")
             .setDescription(
               "🔹 | You need to be in a voice channel to use this command."
@@ -128,11 +114,12 @@ module.exports = {
     )
       return interaction.editReply({
         embeds: [
-          new EmbedBuilder()
+          embed
             .setColor("Blurple")
             .setDescription(
               `🔹 | Sorry but I'm already playing music in <#${guild.members.me.voice.channelId}>.`
-            ),
+            )
+            .setTimestamp(),
         ],
       });
 
@@ -142,6 +129,9 @@ module.exports = {
       textId: interaction.channelId,
       deaf: true,
     });
+
+    const songs = [];
+    const embeds = [];
 
     let res;
     let query;
@@ -157,19 +147,19 @@ module.exports = {
         .setDescription("🔹 | There is nothing in the queue.")
         .setTimestamp();
 
-      const enqueueEmbed = new EmbedBuilder();
-      const playlistEmbed = new EmbedBuilder();
-
       switch (options.getSubcommand()) {
-        case "play": {
+        case "play":
           query = options.getString("query");
-          res = await player.search(query, { requester: interaction.user });
+          res = await player.search(query, {
+            requester: interaction.user,
+          });
 
           if (!res.tracks.length) {
             if (player) player.destroy();
+
             return interaction.editReply({
               embeds: [
-                new EmbedBuilder()
+                embed
                   .setColor("Blurple")
                   .setDescription("🔹 | No results found.")
                   .setTimestamp(),
@@ -179,9 +169,7 @@ module.exports = {
 
           if (res.type === "PLAYLIST") {
             const tracks = res.tracks;
-            for (let track of tracks) {
-              player.queue.add(track);
-            }
+            for (const track of tracks) player.queue.add(track);
 
             if (
               !player.playing &&
@@ -190,7 +178,7 @@ module.exports = {
             )
               player.play();
 
-            playlistEmbed
+            embed
               .setColor("Blurple")
               .setAuthor({
                 name: "Playlist added to the queue",
@@ -211,7 +199,7 @@ module.exports = {
               )
               .setThumbnail(res.tracks[0].thumbnail)
               .setTimestamp();
-            return interaction.editReply({ embeds: [playlistEmbed] });
+            return interaction.editReply({ embeds: [embed] });
           }
 
           if (res.type === "TRACK" || res.type === "SEARCH") {
@@ -220,7 +208,7 @@ module.exports = {
             if (!player.playing && !player.paused && !player.queue.size)
               player.play();
 
-            enqueueEmbed
+            embed
               .setColor("Blurple")
               .setAuthor({
                 name: "Added to the queue",
@@ -236,17 +224,17 @@ module.exports = {
               })
               .setThumbnail(res.tracks[0].thumbnail)
               .setTimestamp();
-            await interaction.editReply({ embeds: [enqueueEmbed] });
+            await interaction.editReply({ embeds: [embed] });
 
             if (player.queue.totalSize > 1)
-              enqueueEmbed.addFields({
+              embed.addFields({
                 name: "Position in queue",
                 value: `${player.queue.size - 0}`,
                 inline: true,
               });
-            return interaction.editReply({ embeds: [enqueueEmbed] });
+            return interaction.editReply({ embeds: [embed] });
           }
-        }
+
         case "volume": {
           const volume = options.getNumber("percent");
 
@@ -256,7 +244,7 @@ module.exports = {
           if (volume < 0 || volume > 100)
             return interaction.editReply({
               embeds: [
-                new EmbedBuilder()
+                embed
                   .setColor("Blurple")
                   .setDescription(
                     "🔹| You can only set the volume from 0 to 100."
@@ -270,7 +258,7 @@ module.exports = {
 
           return interaction.editReply({
             embeds: [
-              new EmbedBuilder()
+              embed
                 .setColor("Blurple")
                 .setDescription(
                   `🔹 | Volume has been set to **${player.volume}%**.`
@@ -279,14 +267,14 @@ module.exports = {
           });
         }
         case "repeat": {
+          if (!player.playing)
+            return interaction.editReply({
+              embeds: [notPlaying],
+              ephemeral: true,
+            });
+
           switch (options.getString("type")) {
             case "queue": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                  ephemeral: true,
-                });
-
               if (!player.queue.length)
                 return interaction.editReply({
                   embeds: [noQueue],
@@ -295,6 +283,7 @@ module.exports = {
 
               if (!player.queueRepeat) {
                 await player.setLoop("queue");
+
                 return interaction.editReply({
                   embeds: [
                     new EmbedBuilder()
@@ -303,10 +292,9 @@ module.exports = {
                       .setTimestamp(),
                   ],
                 });
-              }
-
-              if (player.queueRepeat) {
+              } else {
                 await player.setLoop("off");
+
                 return interaction.editReply({
                   embeds: [
                     new EmbedBuilder()
@@ -318,13 +306,9 @@ module.exports = {
               }
             }
             case "song": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                });
-
               if (!player.trackRepeat) {
                 await player.setLoop("track");
+
                 return interaction.editReply({
                   embeds: [
                     new EmbedBuilder()
@@ -333,9 +317,7 @@ module.exports = {
                       .setTimestamp(),
                   ],
                 });
-              }
-
-              if (player.trackRepeat) {
+              } else {
                 await player.setLoop("off");
                 return interaction.editReply({
                   embeds: [
@@ -381,35 +363,35 @@ module.exports = {
         case "settings": {
           const track = player.queue.current;
 
-          switch (options.getString("options")) {
-            case "skip": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                  ephemeral: true,
-                });
+          if (!player.playing)
+            return interaction.editReply({
+              embeds: [notPlaying],
+              ephemeral: true,
+            });
 
+          if (!player.queue.length)
+            return interaction.editReply({
+              embeds: [noQueue],
+              ephemeral: true,
+            });
+
+          switch (options.getString("options")) {
+            case "skip":
               player.skip();
 
               return interaction.editReply({
                 embeds: [
-                  new EmbedBuilder()
+                  embed
                     .setColor("Blurple")
                     .setDescription("🔹 | Skipped.")
                     .setTimestamp(),
                 ],
               });
-            }
-            case "nowplaying": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                  ephemeral: true,
-                });
 
+            case "nowplaying":
               return interaction.editReply({
                 embeds: [
-                  new EmbedBuilder()
+                  embed
                     .setColor("Blurple")
                     .setAuthor({
                       name: "Now Playing",
@@ -426,39 +408,34 @@ module.exports = {
                     .setTimestamp(),
                 ],
               });
-            }
-            case "pause": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                  ephemeral: true,
-                });
 
+            case "pause":
               player.pause(true);
 
               return interaction.editReply({
                 embeds: [
-                  new EmbedBuilder()
+                  embed
                     .setColor("Blurple")
                     .setDescription("🔹 | Paused.")
                     .setTimestamp(),
                 ],
               });
-            }
-            case "resume": {
+
+            case "resume":
               player.pause(false);
 
               return interaction.editReply({
                 embeds: [
-                  new EmbedBuilder()
+                  embed
                     .setColor("Blurple")
                     .setDescription("🔹 | Resumed.")
                     .setTimestamp(),
                 ],
               });
-            }
+
             case "stop": {
               if (!VC) return interaction.editReply({ embeds: [noVC] });
+
               player.destroy();
 
               return interaction.editReply({
@@ -536,22 +513,7 @@ module.exports = {
                 ],
               });
             }
-            case "queue": {
-              if (!player.playing)
-                return interaction.editReply({
-                  embeds: [notPlaying],
-                  ephemeral: true,
-                });
-
-              if (!player.queue.length)
-                return interaction.editReply({
-                  embeds: [noQueue],
-                  ephemeral: true,
-                });
-
-              const songs = [];
-              const embeds = [];
-
+            case "queue":
               for (let i = 0; i < player.queue.length; i++) {
                 songs.push(
                   `${i + 1}. [${player.queue[i].title}](${
@@ -560,35 +522,20 @@ module.exports = {
                 );
               }
 
-              if (songs.length < 10) {
-                return interaction.editReply({
-                  embeds: [
-                    new EmbedBuilder()
-                      .setColor("Blurple")
-                      .setAuthor({ name: `Current queue for ${guild.name}` })
-                      .setTitle(
-                        `▶️ | Currently playing: ${player.queue.current.title}`
-                      )
-                      .setDescription(songs.slice(0, 10).join("\n"))
-                      .setTimestamp(),
-                  ],
-                });
-              } else {
-                for (let i = 0; i < songs.length; i += 10) {
-                  const queueEmbed = new EmbedBuilder()
-                    .setColor("Blurple")
-                    .setAuthor({ name: `Current queue for ${guild.name}` })
-                    .setTitle(
-                      `▶️ | Currently playing: ${player.queue.current.title}`
-                    )
-                    .setDescription(songs.slice(i, i + 10).join("\n"))
-                    .setTimestamp();
-                  embeds.push(queueEmbed);
-                }
+              for (let i = 0; i < songs.length; i += 10) {
+                embed
+                  .setColor("Blurple")
+                  .setAuthor({ name: `Current queue for ${guild.name}` })
+                  .setTitle(
+                    `▶️ | Currently playing: ${player.queue.current.title}`
+                  )
+                  .setDescription(songs.slice(i, i + 10).join("\n"))
+                  .setTimestamp();
+                embeds.push(embed);
               }
               return await embedPages(client, interaction, embeds);
-            }
-            case "queueclear": {
+
+            case "queueclear":
               if (!player.playing)
                 return interaction.editReply({
                   embeds: [notPlaying],
@@ -611,7 +558,6 @@ module.exports = {
                     .setTimestamp(),
                 ],
               });
-            }
           }
         }
       }

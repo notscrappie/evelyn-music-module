@@ -6,7 +6,7 @@ module.exports = {
   /**
    * @param {ButtonInteraction} interaction
    */
-  async execute(interaction) {
+  execute(interaction) {
     const player = client.manager.players.get(interaction.guild.id);
 
     if (!player) return;
@@ -22,13 +22,13 @@ module.exports = {
       .setTimestamp();
 
     if (!player.playing)
-      return interaction.editReply({
+      return interaction.reply({
         embeds: [notPlaying],
         ephemeral: true,
       });
 
     if (!player.queue.length)
-      return interaction.editReply({
+      return interaction.reply({
         embeds: [noQueue],
         ephemeral: true,
       });
