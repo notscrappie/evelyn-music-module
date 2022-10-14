@@ -1,4 +1,4 @@
-const { VoiceState, PermissionFlagsBits, EmbedBuilder } = require("discord.js");
+const { VoiceState, EmbedBuilder } = require("discord.js");
 const client = require("../../structures/index.js");
 
 module.exports = {
@@ -7,24 +7,10 @@ module.exports = {
    * @param {VoiceState} oldState
    * @param {VoiceState} newState
    */
-  async execute(oldState, newState) {
+  execute(oldState, newState) {
     const player = client.manager.players.get(oldState.guild.id);
 
-    if (!newState.guild.members.me.voice.channel) {
-      player?.destroy();
-    }
-
-    if (
-      newState.channelId &&
-      newState.channel?.type === "GUILD_STAGE_VOICE" &&
-      newState.guild.members.me?.voice.suppress
-    ) {
-      if (
-        newState.guild.members.me.permissions.has(PermissionFlagsBits.Speak)
-      ) {
-        await newState.guild.members.me.voice.setSuppressed(false).catch(_err);
-      }
-    }
+    if (!newState.guild.members.me.voice.channel) player?.destroy();
 
     if (
       oldState.guild.members.cache.get(client.user.id).voice.channelId ===
@@ -38,7 +24,6 @@ module.exports = {
       ) {
         const members = oldState.guild.members.me.voice.channel?.members.size;
         if (!members || members === 1) {
-          const player = client.kazagumo?.players.get(newState.guild.id);
           const guild = client.guilds.cache.get(newState.guild.id);
           const textChannel = guild.channels.cache.get(player?.textId);
 

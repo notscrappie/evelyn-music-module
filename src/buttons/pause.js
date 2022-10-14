@@ -6,37 +6,32 @@ module.exports = {
   /**
    * @param {ButtonInteraction} interaction
    */
-  execute(interaction) {
+  async execute(interaction) {
     const player = client.manager.players.get(interaction.guild.id);
+    const embed = new EmbedBuilder().setColor("Blurple").setTimestamp();
 
     if (!player) return;
+
+    await interaction.deferReply();
 
     if (!player.paused) {
       player.pause(true);
 
-      const pauseEmbed = new EmbedBuilder()
-        .setColor("Blurple")
-        .setDescription("🔹 | Paused.")
-        .setFooter({
-          text: `Action executed by ${interaction.user.username}.`,
-          iconURL: interaction.user.avatarURL({ dynamic: true }),
-        })
-        .setTimestamp();
-      return interaction.reply({ embeds: [pauseEmbed] });
+      embed.setDescription("🔹 | Paused.").setFooter({
+        text: `Action executed by ${interaction.user.username}.`,
+        iconURL: interaction.user.avatarURL({ dynamic: true }),
+      });
+      return interaction.editReply({ embeds: [embed] });
     }
 
     if (player.paused) {
       player.pause(false);
 
-      const resumeEmbed = new EmbedBuilder()
-        .setColor("Blurple")
-        .setDescription("🔹 | Resumed.")
-        .setFooter({
-          text: `Action executed by ${interaction.user.username}.`,
-          iconURL: interaction.user.avatarURL({ dynamic: true }),
-        })
-        .setTimestamp();
-      return interaction.reply({ embeds: [resumeEmbed] });
+      embed.setDescription("🔹 | Resumed.").setFooter({
+        text: `Action executed by ${interaction.user.username}.`,
+        iconURL: interaction.user.avatarURL({ dynamic: true }),
+      });
+      return interaction.editReply({ embeds: [embed] });
     }
   },
 };
